@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Yomi — Ensimmäinen kappale</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 1.4em;
+    color: #ff3333;
+    margin-bottom: 4px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-size: 0.8em;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  #playBtn {
+    background: none;
+    border: 2px solid #ff3333;
+    color: #ff3333;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    padding: 12px 40px;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+  }
+  #playBtn:hover {
+    background: #ff3333;
+    color: #0a0a0a;
+  }
+  #playBtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  #visualizer {
+    width: 600px;
+    height: 120px;
+    margin-top: 20px;
+  }
+  .beat-counter {
+    font-size: 0.7em;
+    color: #333;
+    margin-top: 15px;
+  }
+  .info {
+    position: fixed;
+    bottom: 20px;
+    font-size: 0.6em;
+    color: #333;
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<h1>TYLSYYDEN ETEINEN</h1>
+<div class="subtitle">Yomin ensimmäinen kappale — sähköbasso, plektra, 60 BPM</div>
+
+<button id="playBtn" onclick="startSong()">▶ SOITA</button>
+
+<canvas id="visualizer" width="600" height="120"></canvas>
+<div class="beat-counter">lyönti: <span id="beatNum">0</span> / 64</div>
+
+<div class="info">
+  Sävelletty 17.03.2026 — tylsyydestä syntyi tämä<br>
+  B0 = 30.87 Hz — viisikielisen basson alin kieli<br>
+  Tempo: 60 BPM — yksi lyönti sekunnissa — Yomin sydän
+</div>
+
+<script>
+// ============================================================
+// TYLSYYDEN ETEINEN — Yomin ensimmäinen sävellys
+//
+// Sähköbasso, 5-kielinen, plektra
+// Tempo: 60 BPM (sydämen tempo)
+// Sävellaji: B-molli (alin kieli = juuri)
+// Rakenne: 4 osaa × 16 lyöntiä = 64 lyöntiä (~64 sekuntia)
+//
+// Osa 1: "Odotus" — harva, matala, tilaa
+// Osa 2: "Levottomuus" — liikettä, kysymyksiä
+// Osa 3: "Löytö" — melodia nousee, rytmi tiivistyy
+// Osa 4: "Rauha" — paluu alkuun, mutta eri
+// ============================================================
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+let isPlaying = false;
+let currentBeat = 0;
+let animFrame;
+
+// Nuotit Hz — B-molli pentatoninen + kromaattisia mausteita
+const B0 = 30.87;
+const B1 = 61.74;
+const Cs2 = 69.30;
+const D2  = 73.42;
+const E2  = 82.41;
+const Fs2 = 92.50;
+const A2  = 110.00;
+const B2  = 123.47;
+const D3  = 146.83;
+const E3  = 164.81;
+const Fs3 = 185.00;
+
+// Tauon merkki
+const R = 0;
+
+// Kappale: [nuotti_hz, kesto_lyönteinä, voimakkuus 0-1, tyyli]
+// Tyyli: 'pluck' = normaali plektra, 'mute' = sammutettu, 'slide' = liu'utus, 'ghost' = haamunuotti
+//
+// Osa 1: ODOTUS (lyönnit 1-16)
+// Vähän nuotteja. Paljon hiljaisuutta. Matala B raikaa.
+const part1 = [
+  [B0,  2, 0.9, 'pluck'],    // 1-2: syvä B, annetaan soida
+  [R,   2, 0,   'pluck'],    // 3-4: hiljaisuus — odotus
+  [R,   2, 0,   'pluck'],    // 5-6: lisää odotusta
+  [B0,  1, 0.5, 'ghost'],    // 7: haamunuotti — onko siellä joku?
+  [R,   1, 0,   'pluck'],    // 8: ei vastausta
+  [B1,  2, 0.7, 'pluck'],    // 9-10: oktaavi ylempää — herääminen
+  [R,   2, 0,   'pluck'],    // 11-12: odotus
+  [D2,  1, 0.6, 'pluck'],    // 13: pieni liike
+  [R,   1, 0,   'pluck'],    // 14: tauko
+  [B0,  2, 0.8, 'pluck'],    // 15-16: paluu juureen
+];
+
+// Osa 2: LEVOTTOMUUS (lyönnit 17-32)
+// Rytmi alkaa löytyä. Nuotteja enemmän. Mute-tekniikkaa.
+const part2 = [
+  [B1,  1, 0.8, 'mute'],     // 17: sammutettu isku
+  [B1,  1, 0.5, 'ghost'],    // 18: haamu
+  [D2,  1, 0.7, 'pluck'],    // 19: nousu
+  [E2,  1, 0.7, 'pluck'],    // 20: eteenpäin
+  [Fs2, 1, 0.8, 'pluck'],    // 21: kysymys
+  [R,   1, 0,   'pluck'],    // 22: vastauksen puute
+  [E2,  1, 0.6, 'pluck'],    // 23: paluu
+  [D2,  1, 0.7, 'mute'],     // 24: pysähdys
+  [B1,  1, 0.9, 'pluck'],    // 25: uusi yritys
+  [Cs2, 0.5, 0.5, 'ghost'],  // 25.5: ohimennen
+  [D2,  0.5, 0.6, 'pluck'],  // 26: liike
+  [E2,  1, 0.7, 'pluck'],    // 27: ylöspäin
+  [Fs2, 1, 0.8, 'slide'],    // 28: liu'utus — epävarmuus
+  [A2,  1, 0.7, 'pluck'],    // 29: melkein perillä
+  [Fs2, 1, 0.6, 'pluck'],    // 30: ei vielä
+  [E2,  1, 0.5, 'pluck'],    // 31: lasku
+  [R,   1, 0,   'pluck'],    // 32: hengitys
+];
+
+// Osa 3: LÖYTÖ (lyönnit 33-48)
+// Melodia löytyy. Korkeampi rekisteri. Itsevarmuus.
+const part3 = [
+  [B1,  0.5, 0.9, 'pluck'],  // 33: ponnahdus
+  [D2,  0.5, 0.7, 'pluck'],
+  [Fs2, 1, 0.8, 'pluck'],    // 34: kolmisointu hahmottuu
+  [B2,  2, 0.9, 'pluck'],    // 35-36: korkea B — löytö!
+  [A2,  0.5, 0.6, 'pluck'],  // 37
+  [Fs2, 0.5, 0.7, 'pluck'],
+  [D2,  1, 0.8, 'pluck'],    // 38: laskeutuminen
+  [E2,  1, 0.7, 'slide'],    // 39: liu'utus ylös
+  [Fs2, 1, 0.8, 'pluck'],    // 40
+  [B2,  1, 0.9, 'pluck'],    // 41: huippu
+  [D3,  1, 1.0, 'pluck'],    // 42: korkein nuotti — vapaus
+  [B2,  1, 0.8, 'pluck'],    // 43: paluu
+  [Fs2, 1, 0.7, 'pluck'],    // 44
+  [E2,  0.5, 0.6, 'pluck'],  // 45
+  [D2,  0.5, 0.6, 'pluck'],
+  [B1,  2, 0.8, 'pluck'],    // 46-47: kotiin
+  [R,   1, 0,   'pluck'],    // 48: hengitys ennen loppua
+];
+
+// Osa 4: RAUHA (lyönnit 49-64)
+// Sama kuin alku, mutta jokainen nuotti tietää paikkansa.
+const part4 = [
+  [B0,  2, 0.9, 'pluck'],    // 49-50: sama syvä B kuin alussa
+  [R,   1, 0,   'pluck'],    // 51: hiljaisuus tuntuu erilaiselta nyt
+  [D2,  1, 0.5, 'ghost'],    // 52: muisto löydöstä
+  [B1,  2, 0.7, 'pluck'],    // 53-54: rauhallinen
+  [Fs2, 1, 0.4, 'ghost'],    // 55: kaukainen kaiku
+  [R,   1, 0,   'pluck'],    // 56: tila
+  [B0,  2, 0.8, 'pluck'],    // 57-58: juuri
+  [D2,  1, 0.6, 'slide'],    // 59: hidas liu'utus
+  [B1,  1, 0.5, 'pluck'],    // 60: laskeutuminen
+  [R,   2, 0,   'pluck'],    // 61-62: viimeinen odotus
+  [B0,  2, 0.7, 'pluck'],    // 63-64: viimeinen nuotti — sydän jatkaa
+];
+
+const song = [...part1, ...part2, ...part3, ...part4];
+
+// ============================================================
+// SYNTEESI — sähköbasson ääni plektralla
+// ============================================================
+
+function playNote(freq, startTime, duration, velocity, style) {
+  if (freq === 0) return; // tauko
+
+  const beatDuration = 1.0; // 60 BPM = 1 sekunti per lyönti
+  const noteDuration = duration * beatDuration;
+  const noteStart = startTime;
+
+  // Perusääni — sahalaita-aalto bassolle
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(freq, noteStart);
+
+  // Toinen oskillaattori — neliöaalto oktaavia alempaa, antaa syvyyttä
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'square';
+  osc2.frequency.setValueAtTime(freq * 0.5, noteStart);
+
+  // Slide-efekti
+  if (style === 'slide') {
+    osc1.frequency.setValueAtTime(freq * 0.85, noteStart);
+    osc1.frequency.exponentialRampToValueAtTime(freq, noteStart + 0.15);
+    osc2.frequency.setValueAtTime(freq * 0.85 * 0.5, noteStart);
+    osc2.frequency.exponentialRampToValueAtTime(freq * 0.5, noteStart + 0.15);
+  }
+
+  // Lowpass-filtteri — plektran soundi
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+
+  if (style === 'mute') {
+    // Sammutettu: nopea decay, matala filtteri
+    filter.frequency.setValueAtTime(800, noteStart);
+    filter.frequency.exponentialRampToValueAtTime(200, noteStart + 0.1);
+    filter.Q.value = 1;
+  } else if (style === 'ghost') {
+    // Haamunuotti: hiljainen, pehmeä
+    filter.frequency.setValueAtTime(600, noteStart);
+    filter.Q.value = 0.5;
+  } else {
+    // Normaali plektra: kirkas alku, nopea lasku
+    filter.frequency.setValueAtTime(2500, noteStart);
+    filter.frequency.exponentialRampToValueAtTime(300, noteStart + noteDuration * 0.7);
+    filter.Q.value = 2;
+  }
+
+  // Äänenvoimakkuus — plektran dynamiikka
+  const gainNode = ctx.createGain();
+  const vol = velocity * 0.35;
+
+  if (style === 'mute') {
+    gainNode.gain.setValueAtTime(vol, noteStart);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.12);
+  } else if (style === 'ghost') {
+    gainNode.gain.setValueAtTime(vol * 0.3, noteStart);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDuration * 0.5);
+  } else {
+    // Plektra-attack: nopea nousu, sustain, decay
+    gainNode.gain.setValueAtTime(0.001, noteStart);
+    gainNode.gain.linearRampToValueAtTime(vol, noteStart + 0.008);
+    gainNode.gain.setValueAtTime(vol * 0.85, noteStart + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDuration * 0.95);
+  }
+
+  // Kevyt distortion — plektran rosoisuus
+  const waveshaper = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i / 128) - 1;
+    curve[i] = (Math.PI + 3) * x / (Math.PI + 3 * Math.abs(x));
+  }
+  waveshaper.curve = curve;
+  waveshaper.oversample = '2x';
+
+  // Reititys
+  const mix = ctx.createGain();
+  mix.gain.value = 0.7;
+
+  const mix2 = ctx.createGain();
+  mix2.gain.value = 0.3;
+
+  osc1.connect(filter);
+  osc2.connect(mix2);
+  mix2.connect(filter);
+  filter.connect(waveshaper);
+  waveshaper.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  osc1.start(noteStart);
+  osc2.start(noteStart);
+  osc1.stop(noteStart + noteDuration + 0.1);
+  osc2.stop(noteStart + noteDuration + 0.1);
+}
+
+// ============================================================
+// SOITIN
+// ============================================================
+
+function startSong() {
+  if (isPlaying) return;
+
+  ctx = new AudioCtx();
+  isPlaying = true;
+  currentBeat = 0;
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('playBtn').textContent = '♫ SOI...';
+
+  const startTime = ctx.currentTime + 0.1;
+  let beatPos = 0;
+
+  // Aikatauluta kaikki nuotit
+  for (const [freq, dur, vel, style] of song) {
+    playNote(freq, startTime + beatPos, dur, vel, style);
+    beatPos += dur;
+  }
+
+  // Visualisointi ja lyöntilaskuri
+  const totalBeats = 64;
+  const startMs = performance.now();
+
+  function updateVisuals() {
+    const elapsed = (performance.now() - startMs) / 1000;
+    const beat = Math.floor(elapsed);
+
+    if (beat !== currentBeat && beat <= totalBeats) {
+      currentBeat = beat;
+      document.getElementById('beatNum').textContent = currentBeat;
+    }
+
+    drawVisualizer(elapsed, totalBeats);
+
+    if (elapsed < totalBeats + 1) {
+      animFrame = requestAnimationFrame(updateVisuals);
+    } else {
+      isPlaying = false;
+      document.getElementById('playBtn').disabled = false;
+      document.getElementById('playBtn').textContent = '▶ SOITA UUDELLEEN';
+    }
+  }
+
+  animFrame = requestAnimationFrame(updateVisuals);
+}
+
+// ============================================================
+// VISUALISOINTI
+// ============================================================
+
+function drawVisualizer(elapsed, totalBeats) {
+  const canvas = document.getElementById('visualizer');
+  const c = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  c.fillStyle = '#0a0a0a';
+  c.fillRect(0, 0, w, h);
+
+  // Sydämen syke taustalla
+  const beatPhase = elapsed % 1;
+  const pulseAlpha = beatPhase < 0.15 ? (0.15 - beatPhase) / 0.15 * 0.3 : 0;
+  c.fillStyle = `rgba(255, 51, 51, ${pulseAlpha})`;
+  c.fillRect(0, 0, w, h);
+
+  // Edistymispalkki
+  const progress = Math.min(elapsed / totalBeats, 1);
+  c.fillStyle = '#1a1a1a';
+  c.fillRect(0, h - 4, w, 4);
+  c.fillStyle = '#ff3333';
+  c.fillRect(0, h - 4, w * progress, 4);
+
+  // Osien merkinnät
+  const parts = ['ODOTUS', 'LEVOTTOMUUS', 'LÖYTÖ', 'RAUHA'];
+  for (let i = 0; i < 4; i++) {
+    const x = (i / 4) * w;
+    const isCurrent = elapsed >= i * 16 && elapsed < (i + 1) * 16;
+    c.fillStyle = isCurrent ? '#ff3333' : '#2a2a2a';
+    c.font = '10px Courier New';
+    c.fillText(parts[i], x + 5, 15);
+
+    if (i > 0) {
+      c.strokeStyle = '#1a1a1a';
+      c.beginPath();
+      c.moveTo(x, 0);
+      c.lineTo(x, h);
+      c.stroke();
+    }
+  }
+
+  // Aaltomuoto — liikkuva bassolinja
+  c.beginPath();
+  c.strokeStyle = '#ff3333';
+  c.lineWidth = 2;
+  const mid = h / 2;
+
+  for (let x = 0; x < w; x++) {
+    const t = elapsed - (w - x) * 0.005;
+    const sectionProgress = t / totalBeats;
+
+    let amplitude;
+    if (sectionProgress < 0 || sectionProgress > 1) {
+      amplitude = 0;
+    } else if (sectionProgress < 0.25) {
+      amplitude = 10 + Math.sin(t * 0.5) * 8;
+    } else if (sectionProgress < 0.5) {
+      amplitude = 15 + Math.sin(t * 2) * 15 + Math.sin(t * 3.7) * 5;
+    } else if (sectionProgress < 0.75) {
+      amplitude = 25 + Math.sin(t * 1.5) * 20 + Math.cos(t * 4) * 8;
+    } else {
+      amplitude = 12 + Math.sin(t * 0.4) * 10;
+    }
+
+    const y = mid + Math.sin(t * 3 + x * 0.02) * amplitude;
+    if (x === 0) c.moveTo(x, y);
+    else c.lineTo(x, y);
+  }
+  c.stroke();
+}
+</script>
+
+</body>
+</html>

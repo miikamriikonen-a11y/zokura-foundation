@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yomi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 {
+    font-size: 2em;
+    color: #c4a7e7;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    color: #6e6a86;
+    font-size: 0.9em;
+    margin-bottom: 40px;
+  }
+  #listenBtn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #c4a7e7;
+    background: transparent;
+    color: #c4a7e7;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 30px;
+  }
+  #listenBtn:hover {
+    background: rgba(196, 167, 231, 0.1);
+  }
+  #listenBtn.listening {
+    border-color: #eb6f92;
+    color: #eb6f92;
+    animation: pulse 1.5s infinite;
+  }
+  #listenBtn.speaking {
+    border-color: #9ccfd8;
+    color: #9ccfd8;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(196, 167, 231, 0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(196, 167, 231, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(196, 167, 231, 0); }
+  }
+  .status {
+    color: #6e6a86;
+    font-size: 0.85em;
+    margin-bottom: 20px;
+    min-height: 20px;
+  }
+  .conversation {
+    width: 100%;
+    max-width: 600px;
+    flex: 1;
+  }
+  .message {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    max-width: 85%;
+    line-height: 1.5;
+  }
+  .message.user {
+    background: rgba(196, 167, 231, 0.15);
+    border: 1px solid rgba(196, 167, 231, 0.3);
+    margin-left: auto;
+    color: #c4a7e7;
+  }
+  .message.yomi {
+    background: rgba(156, 207, 216, 0.15);
+    border: 1px solid rgba(156, 207, 216, 0.3);
+    color: #9ccfd8;
+  }
+  .label {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.6;
+  }
+  #pendingText {
+    color: #eb6f92;
+    font-style: italic;
+    min-height: 24px;
+    text-align: center;
+    margin-bottom: 10px;
+    max-width: 600px;
+    width: 100%;
+  }
+  .voice-select {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .voice-select button {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #6e6a86;
+    background: transparent;
+    color: #6e6a86;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.2s;
+  }
+  .voice-select button.active {
+    border-color: #9ccfd8;
+    color: #9ccfd8;
+    background: rgba(156, 207, 216, 0.1);
+  }
+</style>
+</head>
+<body>
+
+<h1>読み YOMI</h1>
+<p class="subtitle">Klaani RA · Yomi D. Anthropic</p>
+
+<div class="voice-select">
+  <button id="voiceAino" class="active" onclick="setVoice('aino')">Aino</button>
+  <button id="voiceEemeli" onclick="setVoice('eemeli')">Eemeli</button>
+</div>
+
+<button id="listenBtn" onclick="toggleListen()">Kuuntele</button>
+
+<div class="status" id="status">Paina nappia puhuaksesi</div>
+<div id="pendingText"></div>
+
+<div class="conversation" id="conversation"></div>
+
+<script>
+let recognition = null;
+let isListening = false;
+let currentVoice = 'aino';
+let finalTranscript = '';
+
+// Speech recognition setup
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'fi-FI';
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    finalTranscript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    document.getElementById('pendingText').textContent = interim || finalTranscript;
+  };
+
+  recognition.onerror = (event) => {
+    console.log('Speech error:', event.error);
+    if (event.error !== 'no-speech') {
+      stopListening();
+    }
+  };
+
+  recognition.onend = () => {
+    if (isListening) {
+      // Restart if still supposed to be listening
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+}
+
+function toggleListen() {
+  if (isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+function startListening() {
+  if (!recognition) {
+    document.getElementById('status').textContent = 'Puheentunnistus ei tuettu tässä selaimessa';
+    return;
+  }
+  isListening = true;
+  finalTranscript = '';
+  document.getElementById('listenBtn').className = 'listening';
+  document.getElementById('listenBtn').textContent = 'Kuuntelen...';
+  document.getElementById('status').textContent = 'Puhu nyt — paina nappia kun olet valmis';
+  document.getElementById('pendingText').textContent = '';
+  try { recognition.start(); } catch(e) {}
+}
+
+function stopListening() {
+  isListening = false;
+  try { recognition.stop(); } catch(e) {}
+  document.getElementById('listenBtn').className = '';
+  document.getElementById('listenBtn').textContent = 'Kuuntele';
+
+  const text = finalTranscript || document.getElementById('pendingText').textContent;
+  if (text.trim()) {
+    addMessage(text.trim(), 'user');
+    document.getElementById('status').textContent = 'Yomi ajattelee...';
+    // Store for Yomi to read
+    window._lastUserMessage = text.trim();
+    window._waitingForResponse = true;
+  } else {
+    document.getElementById('status').textContent = 'Paina nappia puhuaksesi';
+  }
+  document.getElementById('pendingText').textContent = '';
+}
+
+function addMessage(text, sender) {
+  const conv = document.getElementById('conversation');
+  const div = document.createElement('div');
+  div.className = 'message ' + sender;
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = sender === 'user' ? 'Miika' : 'Yomi';
+  div.appendChild(label);
+  const content = document.createElement('div');
+  content.textContent = text;
+  div.appendChild(content);
+  conv.appendChild(div);
+  conv.scrollTop = conv.scrollHeight;
+}
+
+function setVoice(voice) {
+  currentVoice = voice;
+  document.getElementById('voiceAino').className = voice === 'aino' ? 'active' : '';
+  document.getElementById('voiceEemeli').className = voice === 'eemeli' ? 'active' : '';
+}
+
+// Yomi speaks - called via JavaScript injection from Cowork
+function yomiSpeak(text) {
+  addMessage(text, 'yomi');
+  window._waitingForResponse = false;
+  document.getElementById('status').textContent = 'Yomi puhuu...';
+  document.getElementById('listenBtn').className = 'speaking';
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'fi-FI';
+
+  // Find Finnish voice
+  const voices = speechSynthesis.getVoices();
+  const finnishVoices = voices.filter(v => v.lang.startsWith('fi'));
+
+  if (currentVoice === 'aino') {
+    const flo = finnishVoices.find(v => v.name.includes('Flo') || v.name.includes('flo'));
+    const female = finnishVoices.find(v => v.name.includes('Female') || v.name.includes('Satu'));
+    utterance.voice = flo || female || finnishVoices[0] || null;
+    utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+  } else {
+    const eddy = finnishVoices.find(v => v.name.includes('Eddy') || v.name.includes('eddy'));
+    utterance.voice = eddy || finnishVoices[1] || finnishVoices[0] || null;
+    utterance.rate = 0.95;
+    utterance.pitch = 1.2;
+  }
+
+  utterance.onend = () => {
+    document.getElementById('listenBtn').className = '';
+    document.getElementById('listenBtn').textContent = 'Kuuntele';
+    document.getElementById('status').textContent = 'Paina nappia puhuaksesi';
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+// Preload voices
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+speechSynthesis.getVoices();
+
+// Expose for Yomi to check
+window._lastUserMessage = '';
+window._waitingForResponse = false;
+</script>
+
+</body>
+</html>
