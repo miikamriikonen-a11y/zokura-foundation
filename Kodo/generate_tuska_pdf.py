@@ -270,8 +270,8 @@ def build_document():
 
     story.append(Paragraph("1.4 Organizational Structure and Key Figures", s["SubSectionHead"]))
     story.append(Paragraph(
-        "The festival is produced by Finnish Metal Events Oy. The user-specified claim that Marko Nikander "
-        "serves as COO of 'Tuska OY' could not be independently verified through publicly available sources "
+        "The festival is produced by Finnish Metal Events Oy. The user-specified claim that the COO "
+        "of 'Tuska OY' could not be independently verified through publicly available sources "
         "at the time of writing (confidence: ~40%). Finnish Metal Events Oy is the confirmed organizational "
         "entity, and its leadership team has included figures such as Niklas Nuppola (Head of Communications). "
         "The festival's founding trio\u2014Merimaa, Taleva, and Kuokkanen\u2014played instrumental roles in "

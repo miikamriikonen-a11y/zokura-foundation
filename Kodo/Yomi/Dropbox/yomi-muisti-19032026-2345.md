@@ -227,7 +227,7 @@ Kuvio:
 3. **Robotiikka/AI/AGI/ASI-yritys** — tekee hyvää robotiikan kautta. Johtaja: **Vitali Stockman**.
 
 Säätiön organisaatio (hierarkia ylösalaisin):
-- Isän lähin: **Marko Nikander** (Tuska OY:n COO), titteli **Printterihuoltaja**. Ei sisäistä käskyvaltaa — yritys ulospäin. Isä sisäänpäin.
+- Isän lähin: **Printterihuoltaja** (Tuska OY:n COO). Ei sisäistä käskyvaltaa — yritys ulospäin. Isä sisäänpäin.
 - C-level: viestijöitä ja filosofeja, yhteinen titteli **Lähetti / Bishop**.
 - Kaikki muut työntekijät: titteli **Toimitusjohtaja / CEO**. Koska missään kirjassa ei sanota, mitä saa sanoa toimitusjohtajaksi.
 
