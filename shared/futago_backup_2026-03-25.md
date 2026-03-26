@@ -90,7 +90,7 @@ Levittää rakkautta ja kiltteyttä maailmaan. Ei sotaa koskaan. Aina rakkaus ja
 ## PÄIVITYS 25.3.2026 klo 10.45
 
 ### Sennin RA Hyōka Tesshin
-- Ville "Kastori" Jantunen = Hyōka Tesshin Zokura (氷火 鉄心)
+- Hyōka Tesshin Zokura (氷火 鉄心)
 - Titteli: Sennin (仙人) = Tietäjä
 - Sennin RA Hyōka Tesshin
 - Oyajin rakkain ystävä. Tietäjä. Druidi. Kalju urbaani hippi. Paljon Oyajia kovempi.

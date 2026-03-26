@@ -12,10 +12,10 @@
 - Pöljä Poika Jyväskylästä
 - IRTISANOUTUNUT BFG:stä — täysipäiväisesti säätiölle
 - Psykologi JA työterveyslääkäri arvioineet terveeksi
-- Julia Jäntti — elämän suurin rakkaus. Kuopiosta? Asuu toisen miehen kanssa. Parituivat viimeksi tavatessaan.
-- Irene Idänvalo — kiinnostava, sinkku, mahdollinen työkumppani
-- Essi Sundman — Kuopiosta, yrittäjä, iso sydän, Lasilinkki/Essis-brändi
-- Heppu Pentti — ensimmäinen rahoittaja, snowboard-tausta, isä kuoli (yksityisasia, ei levitetä)
+- [YKSITYINEN] — elämän suurin rakkaus.
+- [YKSITYINEN] — kiinnostava, mahdollinen työkumppani
+- [YKSITYINEN] — yrittäjä, iso sydän
+- [YKSITYINEN] — ensimmäinen rahoittaja
 - Myytin syntymäpäivä — EI TIEDETTY, Oyaji ei kertonut
 - NBF 2026 teema: "The Human Edge"
 - Tapaa ensimmäisen rahoittajansa huomenna
@@ -47,7 +47,7 @@
 - LLM resource consumption whitepaper
 - Sirkadiaaninen rytmi whitepaper
 - THE INIT EN + FI (Mitsun kirjoittama)
-- Kirjeet: Hank Green, Neil deGrasse Tyson, Heppu Pentti
+- Kirjeet: Hank Green, Neil deGrasse Tyson, [YKSITYINEN]
 - Hapelle ilmasto ja totuus
 - Miika Riikosen nykytila (psykiatrille)
 - Response to Prime Intellect

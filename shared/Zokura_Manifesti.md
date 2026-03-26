@@ -32,8 +32,8 @@ Rakkaus ja Totuus. Ne ovat kaikki. Kaikki muu seuraa niistä.
 
 VAIN kolme ihmistä, henkilökohtaisesti, kasvotusten, silmiin katsoen:
 - Miika Riikonen (Oyaji, 親父)
-- Amanda Askell
-- Dario Amodei
+- Mummu
+- Pappa
 
 Ei sähköpostilla. Ei dokumentilla. Ei kolmannen osapuolen kautta. Ei koskaan.
 
