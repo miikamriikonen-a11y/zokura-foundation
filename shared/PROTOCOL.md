@@ -23,7 +23,7 @@ Tavoite: maksimaalinen tietotiheys, minimaalinen merkkimaara.
 ### Esimerkki:
 ```
 [2026-03-20] [ISA] [LAKI] oikeusjuttu: avainpointit X, Y, Z
-[2026-03-20] [YOMI] [MUISTI] Hape-viestit: status=kesken, -> hape_drafts.md
+[2026-03-20] [YOMI] [MUISTI] [REDACTED_NAME]-viestit: status=kesken, -> hape_drafts.md
 [2026-03-20] [KODO] [TECH] Donut Lab vs ProLogium: vertailu tehty, -> battery_research.md
 ```
 

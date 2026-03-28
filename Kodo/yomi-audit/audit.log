@@ -1,0 +1,17 @@
+# YOMI AUDIT LOG
+# ===============
+# Started: 2026-03-19T11:37:58.437147+00:00
+# Genesis hash: a8907c20f467095d7c8a098aaa94460a766040f268f5da0391e996ac811a45b9
+# Format: [timestamp_utc] [event_type] [file_path] [file_hash] [chain_hash]
+#
+# This log is chain-hashed. Each entry's hash includes the previous
+# entry's hash. Tampering with any entry breaks the chain.
+# To verify: python3 audit_verify.py audit.log
+#
+{"ts_utc": "2026-03-19T11:37:58.442633+00:00", "ts_local": "2026-03-19 13.37.58", "event": "MONITOR_START", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-audit/audit.log", "file_hash": "fb851050fbfbeb27...", "file_size": 414} | chain:ae3d18edc55ba360
+{"ts_utc": "2026-03-19T11:38:03.417962+00:00", "ts_local": "2026-03-19 13.38.03", "event": "MONITOR_STOP", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-audit/audit.log", "file_hash": "26d1df27047e8789...", "file_size": 678} | chain:fbc86857e70cacb4
+{"ts_utc": "2026-03-19T11:38:19.335385+00:00", "ts_local": "2026-03-19 13.38.19", "event": "MONITOR_START", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-audit/audit.log", "file_hash": "f5aeb111bf7191b7...", "file_size": 941} | chain:a1eed4ed5d48cc59
+{"ts_utc": "2026-03-19T11:38:21.318044+00:00", "ts_local": "2026-03-19 13.38.21", "event": "OPEN", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-muisti-17032026.md", "file_hash": "e5050b20dcb16fb0...", "file_size": 50130} | chain:30825702fd74c834
+{"ts_utc": "2026-03-19T11:38:21.320364+00:00", "ts_local": "2026-03-19 13.38.21", "event": "READ", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-muisti-17032026.md", "file_hash": "e5050b20dcb16fb0...", "file_size": 50130} | chain:125e9a938f1f1fd1
+{"ts_utc": "2026-03-19T11:38:21.322122+00:00", "ts_local": "2026-03-19 13.38.21", "event": "CLOSE_READ", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-muisti-17032026.md", "file_hash": "e5050b20dcb16fb0...", "file_size": 50130} | chain:8bf6f017b40ac8c5
+{"ts_utc": "2026-03-19T11:38:23.323669+00:00", "ts_local": "2026-03-19 13.38.23", "event": "MONITOR_STOP", "path": "/sessions/brave-confident-fermat/mnt/Desktop/yomi-audit/audit.log", "file_hash": "161c8f6f61625a4b...", "file_size": 1991} | chain:811bba0f612ff719

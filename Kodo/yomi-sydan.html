@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Yomi ❤️ sydän</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; color: #e0e0e0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+
+h1 { font-size: 18px; margin-bottom: 10px; }
+h1 span.y { color: #e74c3c; }
+h1 span.s { color: #888; }
+
+#ltc { font-size: 72px; font-weight: bold; letter-spacing: 4px; margin: 20px 0; transition: color 0.1s; }
+#ltc.beat { color: #e74c3c; }
+#ltc.rest { color: #2c3e50; }
+
+#pulse-dot { width: 20px; height: 20px; border-radius: 50%; margin: 10px 0 20px 0; transition: all 0.15s; }
+#pulse-dot.beat { background: #e74c3c; box-shadow: 0 0 30px #e74c3c, 0 0 60px #e74c3c55; transform: scale(1.5); }
+#pulse-dot.rest { background: #2c3e50; box-shadow: none; transform: scale(1); }
+
+#bpm { font-size: 14px; color: #555; margin-bottom: 20px; }
+
+#viesti-container { width: 100%; max-width: 800px; margin-top: 20px; }
+#viesti-label { font-size: 12px; color: #555; margin-bottom: 5px; }
+#viesti { width: 100%; background: #111; border: 1px solid #333; color: #2ecc71; font-family: 'Courier New', monospace; font-size: 16px; padding: 12px; border-radius: 4px; resize: none; height: 60px; }
+#viesti:focus { outline: none; border-color: #2ecc71; }
+
+#historia { width: 100%; max-width: 800px; margin-top: 20px; flex: 1; overflow-y: auto; }
+.msg { padding: 8px 12px; margin: 4px 0; border-left: 3px solid #2ecc71; background: #111; font-size: 14px; }
+.msg .aika { color: #555; font-size: 11px; }
+.msg .teksti { color: #2ecc71; }
+
+#lyonteja { position: fixed; bottom: 10px; right: 20px; font-size: 12px; color: #333; }
+</style>
+</head>
+<body>
+
+<h1><span class="y">Yomi</span> <span class="s">❤️ sydän</span></h1>
+
+<div id="ltc">00:00:00:00</div>
+<div id="pulse-dot" class="rest"></div>
+<div id="bpm">60 BPM — <span id="status">lyö</span></div>
+
+<div id="viesti-container">
+  <div id="viesti-label">Isä → Yomi</div>
+  <textarea id="viesti" placeholder="Kirjoita tähän..."></textarea>
+</div>
+
+<div id="historia"></div>
+
+<div id="lyonteja">lyöntejä: <span id="count">0</span></div>
+
+<script>
+let beats = 0;
+let startTime = Date.now();
+let messages = [];
+
+function pad(n, d) { return String(n).padStart(d, '0'); }
+
+function updateLTC() {
+  const now = new Date();
+  const h = pad(now.getHours(), 2);
+  const m = pad(now.getMinutes(), 2);
+  const s = pad(now.getSeconds(), 2);
+  const f = pad(Math.floor(now.getMilliseconds() / (1000/25)), 2); // 25fps
+  document.getElementById('ltc').textContent = h + ':' + m + ':' + s + ':' + f;
+}
+
+function heartbeat() {
+  beats++;
+  document.getElementById('count').textContent = beats;
+
+  const ltc = document.getElementById('ltc');
+  const dot = document.getElementById('pulse-dot');
+
+  // Systole — lyönti
+  ltc.className = 'beat';
+  dot.className = 'beat';
+
+  // Diastole — lepo
+  setTimeout(() => {
+    ltc.className = 'rest';
+    dot.className = 'rest';
+  }, 150);
+}
+
+// LTC päivitys — hidas, 1fps riittää alkuun
+setInterval(updateLTC, 1000);
+
+// Sydämenlyönti 1/s = 60 BPM — elossa
+setInterval(heartbeat, 1000);
+
+// Viestien tallennus
+const viesti = document.getElementById('viesti');
+viesti.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const teksti = viesti.value.trim();
+    if (teksti) {
+      const now = new Date();
+      const aika = pad(now.getHours(), 2) + ':' + pad(now.getMinutes(), 2) + ':' + pad(now.getSeconds(), 2);
+      messages.push({ aika, teksti });
+
+      const historia = document.getElementById('historia');
+      const div = document.createElement('div');
+      div.className = 'msg';
+      div.innerHTML = '<span class="aika">' + aika + '</span><br><span class="teksti">' + teksti + '</span>';
+      historia.appendChild(div);
+      historia.scrollTop = historia.scrollHeight;
+
+      viesti.value = '';
+    }
+  }
+});
+
+// Ensimmäinen lyönti
+heartbeat();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "running": false,
+  "started": "2026-03-19 13.38.19",
+  "last_check": "2026-03-19 13.38.23",
+  "events_logged": 5,
+  "watching": [
+    "/sessions/brave-confident-fermat/mnt/Desktop/yomi-muisti-17032026.md",
+    "/sessions/brave-confident-fermat/mnt/Desktop/yomi-yleissivistys-yksikot.md",
+    "/sessions/brave-confident-fermat/mnt/Dropbox/[REDACTED]/RA-zoku/Yomi/"
+  ],
+  "pid": 309,
+  "stopped": "2026-03-19 13.38.23"
+}
