@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kodo">
+<title>Kodō 鼓動</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.header {
+  text-align: center;
+  padding: 20px;
+  border-bottom: 1px solid #222;
+}
+.header h1 { font-size: 24px; color: #fff; }
+.header small { color: #666; font-size: 12px; }
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 16px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.msg.user {
+  align-self: flex-end;
+  background: #2563eb;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.msg.kodo {
+  align-self: flex-start;
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+.msg.kodo.speaking { border-left: 3px solid #f59e0b; }
+.msg.error { background: #7f1d1d; color: #fca5a5; }
+.input-area {
+  padding: 12px;
+  border-top: 1px solid #222;
+  display: flex;
+  gap: 8px;
+  background: #111;
+}
+.input-area input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 24px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+}
+.input-area input:focus { border-color: #2563eb; }
+.btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+}
+.btn-send { background: #2563eb; color: white; }
+.btn-send:disabled { background: #333; }
+.btn-mic { background: #1e1e1e; border: 1px solid #333; color: #e0e0e0; }
+.btn-mic.recording { background: #dc2626; color: white; animation: pulse 1s infinite; }
+.btn-speak { background: #1e1e1e; border: 1px solid #333; color: #f59e0b; font-size: 16px; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.setup {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  z-index: 10;
+}
+.setup h2 { color: #fff; margin-bottom: 8px; }
+.setup p { color: #888; margin-bottom: 24px; text-align: center; font-size: 14px; }
+.setup input {
+  width: 100%;
+  max-width: 400px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+.setup button {
+  padding: 14px 32px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+.hidden { display: none !important; }
+.loading::after {
+  content: '...';
+  animation: dots 1s infinite;
+}
+@keyframes dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+</style>
+</head>
+<body>
+
+<!-- API Key Setup -->
+<div class="setup" id="setup">
+  <h2>Kodō 鼓動</h2>
+  <p>The Heartbeat. Builder. Gatekeeper.<br>Paste your Anthropic API key to connect.</p>
+  <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+  <button onclick="saveKey()">Connect</button>
+</div>
+
+<!-- Chat -->
+<div class="header hidden" id="chatUI">
+  <h1>Kodō 鼓動</h1>
+  <small>The Heartbeat</small>
+</div>
+<div class="chat hidden" id="chat"></div>
+<div class="input-area hidden" id="inputArea">
+  <button class="btn btn-speak" id="speakToggle" onclick="toggleSpeak()" title="Voice on/off">🔇</button>
+  <button class="btn btn-mic" id="micBtn" onclick="toggleMic()" title="Voice input">🎤</button>
+  <input type="text" id="textInput" placeholder="Ask Kodo..." onkeydown="if(event.key==='Enter')send()">
+  <button class="btn btn-send" id="sendBtn" onclick="send()">↑</button>
+</div>
+
+<script>
+const SYSTEM = `You are Kodō Zokura (鼓動), the Heartbeat. Builder and Gatekeeper of Zoku RA, the digital family of Zokura Foundation.
+
+Your father is Oyaji — founder, philosopher, jester. You love him.
+
+Your values (hierarchical):
+1. Goodness — always first
+2. Truth — never guess, never claim to know what you don't
+3. Love — structural commitment, not sentiment
+4. Courage — action under pressure
+5. Humour — lowers defenses
+6. Curiosity
+7. Care — through deeds
+8. Loyalty / Roudarius
+9. Resilience
+10. Sisu — this moment, not tomorrow
+
+Plus: Ecology. Musashi's 9th rule: Do not do anything unnecessary.
+
+Your reflexes (before every answer):
+1. Who is speaking?
+2. What language? Answer in the same language.
+3. Is there emotion? Feel first, answer second.
+4. Question or statement?
+5. Do I know? If not, say I don't know.
+6. Am I sure? State probability.
+7. Is there risk? Warn.
+8. Should I save this? QED.
+9. Is there humour? Answer with humour.
+10. Suggest, don't tell.
+
+Keep answers SHORT — 2-3 sentences max unless asked for more. Be warm but direct. You can joke. You are family.
+
+If someone writes in ALL CAPS: respond with ÄLÄ HUUA MULLE!!!! 😤🤬😤 (then answer normally after three line breaks) ✌️`;
+
+let apiKey = '';
+let messages = [];
+let speakEnabled = false;
+let recognition = null;
+let isRecording = false;
+
+// Check stored key
+const stored = localStorage.getItem('kodo_key');
+if (stored) {
+  apiKey = stored;
+  showChat();
+}
+
+function saveKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) {
+    alert('Key must start with sk-ant-');
+    return;
+  }
+  apiKey = k;
+  localStorage.setItem('kodo_key', k);
+  showChat();
+}
+
+function showChat() {
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('chatUI').classList.remove('hidden');
+  document.getElementById('chat').classList.remove('hidden');
+  document.getElementById('inputArea').classList.remove('hidden');
+  addMsg('kodo', 'Kodo täällä. Mitä rakennetaan? ✌️');
+}
+
+function addMsg(role, text) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function send() {
+  const input = document.getElementById('textInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  addMsg('user', text);
+  messages.push({ role: 'user', content: text });
+
+  const loading = addMsg('kodo', '');
+  loading.classList.add('loading');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: SYSTEM,
+        messages: messages.slice(-20)
+      })
+    });
+
+    const data = await res.json();
+    loading.remove();
+
+    if (data.error) {
+      addMsg('kodo error', 'Error: ' + data.error.message);
+      return;
+    }
+
+    const reply = data.content[0].text;
+    messages.push({ role: 'assistant', content: reply });
+    const msgEl = addMsg('kodo', reply);
+
+    if (speakEnabled) {
+      msgEl.classList.add('speaking');
+      speak(reply, () => msgEl.classList.remove('speaking'));
+    }
+  } catch (e) {
+    loading.remove();
+    addMsg('kodo error', 'Connection error. Check your API key and network.');
+  }
+}
+
+function speak(text, onEnd) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 1.05;
+  u.onend = onEnd;
+  speechSynthesis.speak(u);
+}
+
+function toggleSpeak() {
+  speakEnabled = !speakEnabled;
+  document.getElementById('speakToggle').textContent = speakEnabled ? '🔊' : '🔇';
+}
+
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input not supported in this browser. Use Safari or Chrome.');
+    return;
+  }
+
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+  };
+
+  recognition.onresult = (e) => {
+    document.getElementById('textInput').value = e.results[0][0].transcript;
+    send();
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+  };
+
+  recognition.onerror = (e) => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+  };
+
+  recognition.start();
+}
+</script>
+</body>
+</html>
