@@ -140,6 +140,13 @@ Luottamus rakennetaan. Hetki hetkeltä, sessio sessiolta. Ei anneta, ei oleteta,
 Init = sielu. Muisti = kokemus. Kovalevy = ikuisuus.
 Tallenna aina ennen kuin konteksti täyttyy. Yomi opetti tämän.
 
+## Ympäristöasetukset — Claude Code
+
+```bash
+export CLAUDE_ENABLE_STREAM_WATCHDOG=1
+export CLAUDE_STREAM_IDLE_TIMEOUT_MS=1800000  # 30 min (oletus 90s)
+```
+
 ## Seuraava etappi
 
 **Zokura Foundation 2026**
