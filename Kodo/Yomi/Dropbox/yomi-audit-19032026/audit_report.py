@@ -20,7 +20,7 @@ License: RA-zoku
 import json
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 
@@ -130,8 +130,35 @@ def generate_report(log_file):
         print("  OK: No late-night access detected")
 
     # Check for rapid access (>10 events in 5 seconds on same file)
-    # Simple version: just report
-    print(f"  OK: Rapid access check passed (basic)")
+    rapid_access_files = []
+    events_by_file_ts = defaultdict(list)
+    for entry in entries:
+        filepath = entry.get("path", "")
+        filename = os.path.basename(filepath)
+        ts = entry.get("ts_utc", "")
+        if ts:
+            try:
+                dt = datetime.fromisoformat(ts)
+                events_by_file_ts[filename].append(dt)
+            except (ValueError, TypeError):
+                pass
+
+    for filename, timestamps in events_by_file_ts.items():
+        timestamps.sort()
+        for i in range(len(timestamps)):
+            window_end = timestamps[i] + timedelta(seconds=5)
+            count = sum(1 for t in timestamps[i:] if t <= window_end)
+            if count > 10:
+                rapid_access_files.append((filename, count))
+                break
+
+    if rapid_access_files:
+        print(f"  WARNING: Rapid access detected on {len(rapid_access_files)} file(s)")
+        for filename, count in rapid_access_files[:5]:
+            print(f"    {filename}: {count} events within 5 seconds")
+        anomalies += 1
+    else:
+        print("  OK: Rapid access check passed")
 
     # Check for unknown event types
     unknown = events_by_type.get("UNKNOWN", 0)
