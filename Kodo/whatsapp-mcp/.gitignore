@@ -1,0 +1,11 @@
+*.db
+claude_desktop_config.json
+whatsapp.log
+
+# WhatsApp bridge auth & session data (sensitive)
+whatsapp-bridge/store/
+whatsapp-bridge/whatsapp-bridge
+
+# Python virtual environment
+whatsapp-mcp-server/.venv/
+whatsapp-mcp-server/__pycache__/

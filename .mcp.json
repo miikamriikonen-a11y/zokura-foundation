@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "whatsapp": {
+      "command": "/root/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/home/user/zokura-foundation/Kodo/whatsapp-mcp/whatsapp-mcp-server",
+        "run",
+        "main.py"
+      ]
+    }
+  }
+}
