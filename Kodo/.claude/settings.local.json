@@ -12,7 +12,8 @@
       "mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__*",
       "mcp__mcp-registry__*",
       "mcp__scheduled-tasks__*",
-      "mcp__whatsapp__*"
+      "mcp__whatsapp__*",
+      "mcp__github__*"
     ],
     "defaultMode": "bypassPermissions"
   }
