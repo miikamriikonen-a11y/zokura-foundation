@@ -208,7 +208,10 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
         )
         raw = response.content[0].text.strip()
     except Exception as e:
+        cause = getattr(e, "__cause__", None)
         print(f"[claude error] {type(e).__name__}: {e}")
+        if cause:
+            print(f"[claude cause] {type(cause).__name__}: {cause}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
     try:
