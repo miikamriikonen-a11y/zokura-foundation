@@ -14,6 +14,7 @@ import io
 import json
 import datetime
 from pathlib import Path
+from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, UploadFile
@@ -83,10 +84,10 @@ app = FastAPI(title="Kodō Keynote Server")
 
 # Session log — appended to throughout run
 session_file = SESSIONS_DIR / f"{datetime.datetime.now():%Y-%m-%d-%H%M}.md"
-session_history: list[dict] = []
+session_history: List[Dict] = []
 
 
-def log(role: str, content: str, extra: dict | None = None):
+def log(role: str, content: str, extra: Optional[Dict] = None):
     """Append to session log on disk and in-memory history."""
     ts = datetime.datetime.now().isoformat(timespec="seconds")
     entry = {"ts": ts, "role": role, "content": content}
