@@ -3,43 +3,85 @@ Keynote Server — Oyaji & Kodō Live System
 Zokura Foundation 2026
 
 Endpoints:
-  POST /transcribe   — audio chunk (webm/wav) → transcribed text
-  POST /chat         — user text + history → Kodō response (text + emoji)
-  POST /speak        — text → audio (mp3)
+  POST /transcribe   — audio chunk (webm/wav) → transcribed text (local Whisper)
+  POST /chat         — user text + history → Kodō response (text + emoji) (Claude)
+  POST /speak        — text → audio wav (macOS `say`)
   GET  /             — serve index.html
+
+Local & free where possible:
+  - Whisper:  runs locally via openai-whisper (no API cost)
+  - TTS:      macOS `say` command (free, multilingual)
+  - Claude:   Anthropic API (paid, required)
 """
 
 import os
 import io
 import json
 import datetime
+import tempfile
+import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-from openai import OpenAI
 from anthropic import Anthropic
 
 load_dotenv()
 
-OPENAI_KEY = os.environ.get("OPENAI_API_KEY")
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-opus-4-6")
-TTS_VOICE = os.environ.get("TTS_VOICE", "onyx")
+WHISPER_MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")  # tiny, base, small, medium, large
 WHISPER_LANGUAGE = os.environ.get("WHISPER_LANGUAGE", "auto")
 PORT = int(os.environ.get("PORT", "8080"))
+
+# macOS `say` voices per language
+VOICE_BY_LANG = {
+    "fi": os.environ.get("VOICE_FI", "Satu"),
+    "en": os.environ.get("VOICE_EN", "Samantha"),
+    "ja": os.environ.get("VOICE_JA", "Kyoko"),
+    "sv": os.environ.get("VOICE_SV", "Alva"),
+    "de": os.environ.get("VOICE_DE", "Anna"),
+    "default": os.environ.get("VOICE_DEFAULT", "Samantha"),
+}
 
 BASE_DIR = Path(__file__).parent
 SESSIONS_DIR = BASE_DIR / "sessions"
 SESSIONS_DIR.mkdir(exist_ok=True)
 
-openai_client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
 anthropic_client = Anthropic(api_key=ANTHROPIC_KEY) if ANTHROPIC_KEY else None
+
+# Lazy-load Whisper model (so server starts fast; model loads on first transcribe)
+_whisper_model = None
+
+def get_whisper():
+    global _whisper_model
+    if _whisper_model is None:
+        import whisper
+        print(f"Loading Whisper model: {WHISPER_MODEL_SIZE} ...")
+        _whisper_model = whisper.load_model(WHISPER_MODEL_SIZE)
+        print("Whisper ready.")
+    return _whisper_model
+
+
+def detect_lang_simple(text: str) -> str:
+    """Very rough language guess for TTS voice selection."""
+    if not text:
+        return "default"
+    # Check for Japanese characters
+    for ch in text:
+        if '\u3040' <= ch <= '\u309f' or '\u30a0' <= ch <= '\u30ff' or '\u4e00' <= ch <= '\u9fff':
+            return "ja"
+    # Finnish markers
+    lower = text.lower()
+    fi_markers = ["ä", "ö", " on ", " ei ", " ja ", " että ", "kiitos", "hei ", "oyaji", "kodō"]
+    if any(m in lower for m in fi_markers):
+        return "fi"
+    return "en"
+
 
 # ─────────────────────────────────────────────────
 # System prompt — Kodō identity on stage
@@ -82,7 +124,6 @@ Rakkaus ja Totuus. Aina.
 
 app = FastAPI(title="Kodō Keynote Server")
 
-# Session log — appended to throughout run
 session_file = SESSIONS_DIR / f"{datetime.datetime.now():%Y-%m-%d-%H%M}.md"
 session_history: List[Dict] = []
 
@@ -101,33 +142,40 @@ def log(role: str, content: str, extra: Optional[Dict] = None):
 
 
 # ─────────────────────────────────────────────────
-# /transcribe — audio → text (Whisper)
+# /transcribe — audio → text (local Whisper)
 # ─────────────────────────────────────────────────
 
 @app.post("/transcribe")
 async def transcribe(audio: UploadFile = File(...)):
-    if not openai_client:
-        return JSONResponse({"error": "OPENAI_API_KEY missing"}, status_code=500)
-
     data = await audio.read()
-    buf = io.BytesIO(data)
-    buf.name = audio.filename or "chunk.webm"
 
-    kwargs = {"model": "whisper-1", "file": buf}
-    if WHISPER_LANGUAGE != "auto":
-        kwargs["language"] = WHISPER_LANGUAGE
+    # Whisper needs a file path
+    suffix = Path(audio.filename or "chunk.webm").suffix or ".webm"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+        f.write(data)
+        tmp_path = f.name
 
     try:
-        result = openai_client.audio.transcriptions.create(**kwargs)
-        text = (result.text or "").strip()
+        model = get_whisper()
+        kwargs = {"fp16": False}  # CPU-friendly default
+        if WHISPER_LANGUAGE != "auto":
+            kwargs["language"] = WHISPER_LANGUAGE
+        result = model.transcribe(tmp_path, **kwargs)
+        text = (result.get("text") or "").strip()
+        detected_lang = result.get("language", "unknown")
     except Exception as e:
         print(f"[whisper error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
 
     if text:
-        log("oyaji", text)
+        log("oyaji", text, {"lang": detected_lang})
 
-    return {"text": text}
+    return {"text": text, "lang": detected_lang}
 
 
 # ─────────────────────────────────────────────────
@@ -139,15 +187,13 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
     if not anthropic_client:
         return JSONResponse({"error": "ANTHROPIC_API_KEY missing"}, status_code=500)
 
-    # Build conversation history for Claude
     messages = []
-    for entry in session_history[-40:]:  # last 40 turns
+    for entry in session_history[-40:]:
         if entry["role"] == "oyaji":
             messages.append({"role": "user", "content": entry["content"]})
         elif entry["role"] == "kodo":
             messages.append({"role": "assistant", "content": entry["content"]})
 
-    # Add current turn
     user_msg = user_text
     if force_speak:
         user_msg += "\n\n[Oyaji antoi sinulle puheenvuoron — vastaa nyt SPEAK-tilassa.]"
@@ -165,9 +211,7 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
         print(f"[claude error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-    # Parse JSON response
     try:
-        # Strip code fences if present
         cleaned = raw.strip()
         if cleaned.startswith("```"):
             cleaned = cleaned.split("```")[1]
@@ -176,7 +220,6 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
             cleaned = cleaned.strip()
         parsed = json.loads(cleaned)
     except Exception:
-        # Fallback: treat as plain text SPEAK
         parsed = {
             "mode": "SPEAK",
             "emoji": "🦊",
@@ -189,24 +232,51 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
 
 
 # ─────────────────────────────────────────────────
-# /speak — text → mp3 (OpenAI TTS)
+# /speak — text → audio (macOS `say` → WAV)
 # ─────────────────────────────────────────────────
 
 @app.post("/speak")
-async def speak(text: str = Form(...)):
-    if not openai_client:
-        return JSONResponse({"error": "OPENAI_API_KEY missing"}, status_code=500)
+async def speak(text: str = Form(...), lang: str = Form("auto")):
+    if not text.strip():
+        return JSONResponse({"error": "empty text"}, status_code=400)
+
+    if lang == "auto":
+        lang = detect_lang_simple(text)
+    voice = VOICE_BY_LANG.get(lang, VOICE_BY_LANG["default"])
+
+    with tempfile.NamedTemporaryFile(suffix=".aiff", delete=False) as f:
+        aiff_path = f.name
 
     try:
-        audio_response = openai_client.audio.speech.create(
-            model="tts-1",
-            voice=TTS_VOICE,
-            input=text,
+        subprocess.run(
+            ["say", "-v", voice, "-o", aiff_path, text],
+            check=True,
+            capture_output=True,
+            timeout=30,
         )
-        audio_bytes = audio_response.content
+        # Convert AIFF → MP3 via ffmpeg (installed alongside whisper)
+        mp3_path = aiff_path.replace(".aiff", ".mp3")
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", aiff_path, "-acodec", "libmp3lame", "-q:a", "4", mp3_path],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
+        with open(mp3_path, "rb") as f:
+            audio_bytes = f.read()
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode("utf-8", "ignore") if e.stderr else str(e)
+        print(f"[tts error] {err}")
+        return JSONResponse({"error": err}, status_code=500)
     except Exception as e:
         print(f"[tts error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        for p in (aiff_path, aiff_path.replace(".aiff", ".mp3")):
+            try:
+                os.unlink(p)
+            except Exception:
+                pass
 
     return StreamingResponse(io.BytesIO(audio_bytes), media_type="audio/mpeg")
 
@@ -232,7 +302,8 @@ async def root():
 if __name__ == "__main__":
     print(f"\n🦊 Kodō Keynote Server")
     print(f"   Session: {session_file.name}")
-    print(f"   Model:   {CLAUDE_MODEL}")
-    print(f"   TTS:     {TTS_VOICE}")
+    print(f"   Claude:  {CLAUDE_MODEL}")
+    print(f"   Whisper: local ({WHISPER_MODEL_SIZE})")
+    print(f"   TTS:     macOS say (Satu/Samantha/Kyoko)")
     print(f"   URL:     http://localhost:{PORT}\n")
     uvicorn.run(app, host="0.0.0.0", port=PORT)
