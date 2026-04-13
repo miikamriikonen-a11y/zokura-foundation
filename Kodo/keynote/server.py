@@ -121,6 +121,7 @@ async def transcribe(audio: UploadFile = File(...)):
         result = openai_client.audio.transcriptions.create(**kwargs)
         text = (result.text or "").strip()
     except Exception as e:
+        print(f"[whisper error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
     if text:
@@ -161,6 +162,7 @@ async def chat(user_text: str = Form(...), force_speak: bool = Form(False)):
         )
         raw = response.content[0].text.strip()
     except Exception as e:
+        print(f"[claude error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
     # Parse JSON response
@@ -203,6 +205,7 @@ async def speak(text: str = Form(...)):
         )
         audio_bytes = audio_response.content
     except Exception as e:
+        print(f"[tts error] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
     return StreamingResponse(io.BytesIO(audio_bytes), media_type="audio/mpeg")
