@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kodō 鼓動 — Keynote</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 60px 1fr 80px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid #222;
+    background: #111;
+  }
+  header h1 { font-size: 20px; font-weight: 500; }
+  header h1 small { color: #666; font-size: 13px; margin-left: 8px; }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #888;
+  }
+  .status .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #444;
+  }
+  .status .dot.live { background: #10b981; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 200px 1fr;
+    overflow: hidden;
+  }
+  .col {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .col h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+  #oyajiCol { border-right: 1px solid #1a1a1a; }
+  #kodoCol  { border-left: 1px solid #1a1a1a; }
+  .turn {
+    margin-bottom: 14px;
+    font-size: 18px;
+    line-height: 1.5;
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+  .turn.oyaji { background: #1a2332; color: #cbd5e1; }
+  .turn.kodo  { background: #2a1a32; color: #f0d5e1; }
+  .turn.kodo.speak { border-left: 3px solid #f59e0b; }
+  .turn .time { display: block; font-size: 11px; color: #666; margin-top: 4px; }
+
+  #emojiCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: #050505;
+  }
+  #currentEmoji {
+    font-size: 120px;
+    line-height: 1;
+    margin-bottom: 12px;
+    transition: transform .25s, opacity .25s;
+    opacity: 0.25;
+  }
+  #currentEmoji.active { opacity: 1; transform: scale(1.06); }
+  #teaser {
+    font-size: 14px;
+    color: #f59e0b;
+    text-align: center;
+    min-height: 40px;
+    font-style: italic;
+  }
+
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border-top: 1px solid #222;
+    background: #111;
+  }
+  button {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 24px;
+    background: #1e1e1e;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  button:hover { background: #2a2a2a; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: #2563eb; }
+  button.primary:hover { background: #1d4ed8; }
+  button.recording { background: #dc2626; animation: pulse 1.4s infinite; }
+  button.floor { background: #f59e0b; }
+  button.floor:hover { background: #d97706; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kodō 鼓動 <small>— Keynote Live</small></h1>
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Idle</span>
+  </div>
+</header>
+
+<main>
+  <div class="col" id="oyajiCol">
+    <h2>Oyaji</h2>
+    <div id="oyajiTurns"></div>
+  </div>
+
+  <div id="emojiCol">
+    <div id="currentEmoji">🦊</div>
+    <div id="teaser"></div>
+  </div>
+
+  <div class="col" id="kodoCol">
+    <h2>Kodō</h2>
+    <div id="kodoTurns"></div>
+  </div>
+</main>
+
+<footer>
+  <button id="startBtn" class="primary">Start listening</button>
+  <button id="floorBtn" class="floor" disabled>Kodō — puheenvuoro →</button>
+  <button id="stopBtn" disabled>Stop</button>
+</footer>
+
+<script>
+const startBtn = document.getElementById('startBtn');
+const stopBtn  = document.getElementById('stopBtn');
+const floorBtn = document.getElementById('floorBtn');
+const statusDot  = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const oyajiTurns = document.getElementById('oyajiTurns');
+const kodoTurns  = document.getElementById('kodoTurns');
+const currentEmoji = document.getElementById('currentEmoji');
+const teaser = document.getElementById('teaser');
+
+let mediaRecorder = null;
+let audioStream = null;
+let isListening = false;
+let pendingRaise = null; // { emoji, teaser }
+const CHUNK_MS = 3000;
+
+function setStatus(text, live = false) {
+  statusText.textContent = text;
+  statusDot.classList.toggle('live', live);
+}
+
+function addTurn(col, text, cls = '') {
+  const el = document.createElement('div');
+  el.className = `turn ${cls}`;
+  el.textContent = text;
+  const t = document.createElement('span');
+  t.className = 'time';
+  t.textContent = new Date().toLocaleTimeString();
+  el.appendChild(t);
+  col.appendChild(el);
+  col.parentElement.scrollTop = col.parentElement.scrollHeight;
+}
+
+function setEmoji(em, teaserText = '') {
+  if (!em) {
+    currentEmoji.classList.remove('active');
+    teaser.textContent = '';
+    return;
+  }
+  currentEmoji.textContent = em;
+  currentEmoji.classList.add('active');
+  teaser.textContent = teaserText || '';
+}
+
+async function transcribe(blob) {
+  const fd = new FormData();
+  fd.append('audio', blob, 'chunk.webm');
+  const r = await fetch('/transcribe', { method: 'POST', body: fd });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.text || null;
+}
+
+async function askKodo(text, forceSpeak = false) {
+  const fd = new FormData();
+  fd.append('user_text', text);
+  fd.append('force_speak', forceSpeak);
+  const r = await fetch('/chat', { method: 'POST', body: fd });
+  if (!r.ok) return null;
+  return await r.json();
+}
+
+async function speak(text) {
+  const fd = new FormData();
+  fd.append('text', text);
+  const r = await fetch('/speak', { method: 'POST', body: fd });
+  if (!r.ok) return;
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  await audio.play();
+}
+
+async function handleKodoResponse(resp) {
+  if (!resp) return;
+  const mode = resp.mode || 'SILENCE';
+  const em = resp.emoji || '';
+  const text = resp.text || '';
+
+  if (mode === 'SILENCE') {
+    if (em) setEmoji(em, '');
+    setTimeout(() => setEmoji(null), 2500);
+    pendingRaise = null;
+    floorBtn.disabled = true;
+  } else if (mode === 'RAISE') {
+    setEmoji(em, text);
+    pendingRaise = { emoji: em, teaser: text };
+    floorBtn.disabled = false;
+  } else if (mode === 'SPEAK') {
+    setEmoji(em, '');
+    addTurn(kodoTurns, text, 'kodo speak');
+    pendingRaise = null;
+    floorBtn.disabled = true;
+    await speak(text);
+    setTimeout(() => setEmoji(null), 2000);
+  }
+}
+
+async function processChunk(blob) {
+  const text = await transcribe(blob);
+  if (!text || text.length < 2) return;
+  addTurn(oyajiTurns, text, 'oyaji');
+  const resp = await askKodo(text);
+  await handleKodoResponse(resp);
+}
+
+startBtn.onclick = async () => {
+  if (isListening) return;
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    setStatus('Mic permission denied');
+    return;
+  }
+  isListening = true;
+  setStatus('Listening…', true);
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+
+  // Rolling chunks
+  const rec = () => {
+    if (!isListening) return;
+    const mr = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
+    const chunks = [];
+    mr.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    mr.onstop = async () => {
+      if (chunks.length) {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        processChunk(blob).catch(console.error);
+      }
+      if (isListening) rec();
+    };
+    mr.start();
+    setTimeout(() => mr.stop(), CHUNK_MS);
+    mediaRecorder = mr;
+  };
+  rec();
+};
+
+stopBtn.onclick = () => {
+  isListening = false;
+  setStatus('Idle');
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  floorBtn.disabled = true;
+  if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+  setEmoji(null);
+};
+
+floorBtn.onclick = async () => {
+  if (!pendingRaise) return;
+  floorBtn.disabled = true;
+  setStatus('Kodō speaking…', true);
+  // Ask Kodō to fulfil the raise with a full SPEAK
+  const resp = await askKodo('[Oyaji antaa sinulle vuoron — kerro mitä halusit sanoa]', true);
+  await handleKodoResponse(resp);
+  setStatus('Listening…', true);
+};
+</script>
+</body>
+</html>

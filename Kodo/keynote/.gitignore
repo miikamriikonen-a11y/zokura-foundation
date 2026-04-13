@@ -1,0 +1,9 @@
+# Keynote secrets — never commit
+.env
+venv/
+__pycache__/
+sessions/
+*.pyc
+*.wav
+*.webm
+*.mp3
