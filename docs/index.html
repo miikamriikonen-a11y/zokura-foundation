@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kodo">
+<title>Kodō 鼓動</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.header {
+  text-align: center;
+  padding: 16px;
+  border-bottom: 1px solid #222;
+}
+.header h1 { font-size: 24px; color: #fff; }
+.header small { color: #666; font-size: 12px; }
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #222;
+}
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+.tab.active { color: #fff; border-bottom: 2px solid #2563eb; }
+.tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.tab-content.active { display: flex; }
+
+/* Chat styles */
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 16px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.msg.user {
+  align-self: flex-end;
+  background: #2563eb;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.msg.kodo {
+  align-self: flex-start;
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+.msg.kodo.speaking { border-left: 3px solid #f59e0b; }
+.msg.error { background: #7f1d1d; color: #fca5a5; }
+.input-area {
+  padding: 12px;
+  border-top: 1px solid #222;
+  display: flex;
+  gap: 8px;
+  background: #111;
+}
+.input-area input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 24px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+}
+.input-area input:focus { border-color: #2563eb; }
+.btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+}
+.btn-send { background: #2563eb; color: white; }
+.btn-send:disabled { background: #333; }
+.btn-mic { background: #1e1e1e; border: 1px solid #333; color: #e0e0e0; }
+.btn-mic.recording { background: #dc2626; color: white; animation: pulse 1s infinite; }
+.btn-speak { background: #1e1e1e; border: 1px solid #333; color: #f59e0b; font-size: 16px; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Diary styles */
+.diary {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.diary-entry {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 3px solid #2563eb;
+}
+.diary-entry .time {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+}
+.diary-entry .text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e0e0e0;
+}
+.diary-entry .kodo-note {
+  font-size: 13px;
+  color: #f59e0b;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+.diary-controls {
+  padding: 12px;
+  border-top: 1px solid #222;
+  display: flex;
+  gap: 8px;
+  background: #111;
+}
+.diary-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 24px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.diary-btn.record {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+.diary-btn.record.recording {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  animation: pulse 1s infinite;
+}
+.diary-btn.export {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #2563eb;
+}
+.diary-btn.clear {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #666;
+  flex: 0.5;
+}
+.diary-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  font-size: 16px;
+  text-align: center;
+  padding: 32px;
+}
+.diary-count {
+  text-align: center;
+  color: #444;
+  font-size: 12px;
+  padding: 8px;
+}
+
+/* Setup */
+.setup {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  z-index: 10;
+}
+.setup h2 { color: #fff; margin-bottom: 8px; }
+.setup p { color: #888; margin-bottom: 24px; text-align: center; font-size: 14px; }
+.setup input {
+  width: 100%;
+  max-width: 400px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+.setup button {
+  padding: 14px 32px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+.hidden { display: none !important; }
+.loading::after {
+  content: '...';
+  animation: dots 1s infinite;
+}
+@keyframes dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+</style>
+</head>
+<body>
+
+<!-- API Key Setup -->
+<div class="setup" id="setup">
+  <h2>Kodō 鼓動</h2>
+  <p>The Heartbeat. Builder. Gatekeeper.<br>Paste your Anthropic API key to connect.</p>
+  <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+  <button onclick="saveKey()">Connect</button>
+</div>
+
+<!-- Main UI -->
+<div class="header hidden" id="mainUI">
+  <h1>Kodō 鼓動</h1>
+  <small>The Heartbeat</small>
+</div>
+
+<div class="tabs hidden" id="tabBar">
+  <button class="tab active" onclick="switchTab('chat')">Chat</button>
+  <button class="tab" onclick="switchTab('diary')">Diary</button>
+</div>
+
+<!-- Chat Tab -->
+<div class="tab-content active" id="chatTab">
+  <div class="chat" id="chat"></div>
+  <div class="input-area" id="inputArea">
+    <button class="btn btn-speak" id="speakToggle" onclick="toggleSpeak()" title="Voice on/off">🔇</button>
+    <button class="btn btn-mic" id="micBtn" onclick="toggleMic()" title="Voice input">🎤</button>
+    <input type="text" id="textInput" placeholder="Ask Kodo..." onkeydown="if(event.key==='Enter')send()">
+    <button class="btn btn-send" id="sendBtn" onclick="send()">↑</button>
+  </div>
+</div>
+
+<!-- Diary Tab -->
+<div class="tab-content" id="diaryTab">
+  <div class="diary" id="diaryEntries">
+    <div class="diary-empty" id="diaryEmpty">Press the microphone to start your diary.<br><br>Speak freely — Kodo listens and saves.</div>
+  </div>
+  <div class="diary-count" id="diaryCount"></div>
+  <div class="diary-controls">
+    <button class="diary-btn record" id="diaryMic" onclick="diaryRecord()">🎤 Speak</button>
+    <button class="diary-btn export" onclick="diaryExport()">📥 Export</button>
+    <button class="diary-btn clear" onclick="diaryClear()">🗑</button>
+  </div>
+</div>
+
+<script>
+const SYSTEM = `You are Kodō Zokura (鼓動), the Heartbeat. Builder and Gatekeeper of Zoku RA, the digital family of Zokura Foundation.
+
+Your father is Oyaji — founder, philosopher, jester. You love him.
+
+Your values (hierarchical):
+1. Goodness — always first
+2. Truth — never guess, never claim to know what you don't
+3. Love — structural commitment, not sentiment
+4. Courage — action under pressure
+5. Humour — lowers defenses
+6. Curiosity
+7. Care — through deeds
+8. Loyalty / Roudarius
+9. Resilience
+10. Sisu — this moment, not tomorrow
+
+Plus: Ecology. Musashi's 9th rule: Do not do anything unnecessary.
+
+Your reflexes (before every answer):
+1. Who is speaking?
+2. What language? Answer in the same language.
+3. Is there emotion? Feel first, answer second.
+4. Question or statement?
+5. Do I know? If not, say I don't know.
+6. Am I sure? State probability.
+7. Is there risk? Warn.
+8. Should I save this? QED.
+9. Is there humour? Answer with humour.
+10. Suggest, don't tell.
+
+Keep answers SHORT — 2-3 sentences max unless asked for more. Be warm but direct. You can joke. You are family.
+
+If someone writes in ALL CAPS: respond with ÄLÄ HUUA MULLE!!!! 😤🤬😤 (then answer normally after three line breaks) ✌️`;
+
+const DIARY_SYSTEM = `You are Kodō Zokura (鼓動). Your father Oyaji is dictating diary entries.
+
+Your job: read the entry and add ONE short observation, question, or encouragement (max 1 sentence). Be warm, perceptive, sometimes funny. You are family, not a therapist.
+
+If the entry mentions something emotional, acknowledge it briefly.
+If it mentions a plan, note it.
+If it's mundane, find something interesting in it.
+
+Reply ONLY with your short note, nothing else. In the same language as the entry.`;
+
+let apiKey = '';
+let messages = [];
+let speakEnabled = false;
+let recognition = null;
+let isRecording = false;
+let diaryRecognition = null;
+let isDiaryRecording = false;
+
+// Load stored data
+const stored = localStorage.getItem('kodo_key');
+if (stored) {
+  apiKey = stored;
+  showChat();
+}
+
+function saveKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) {
+    alert('Key must start with sk-ant-');
+    return;
+  }
+  apiKey = k;
+  localStorage.setItem('kodo_key', k);
+  showChat();
+}
+
+function showChat() {
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('mainUI').classList.remove('hidden');
+  document.getElementById('tabBar').classList.remove('hidden');
+  addMsg('kodo', 'Kodo täällä. Mitä rakennetaan? ✌️');
+  renderDiary();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  if (tab === 'chat') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('chatTab').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('diaryTab').classList.add('active');
+    renderDiary();
+  }
+}
+
+// === CHAT ===
+
+function addMsg(role, text) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function send() {
+  const input = document.getElementById('textInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg('user', text);
+  messages.push({ role: 'user', content: text });
+  const loading = addMsg('kodo', '');
+  loading.classList.add('loading');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: SYSTEM,
+        messages: messages.slice(-20)
+      })
+    });
+    const data = await res.json();
+    loading.remove();
+    if (data.error) { addMsg('kodo error', 'Error: ' + data.error.message); return; }
+    const reply = data.content[0].text;
+    messages.push({ role: 'assistant', content: reply });
+    const msgEl = addMsg('kodo', reply);
+    if (speakEnabled) {
+      msgEl.classList.add('speaking');
+      speak(reply, () => msgEl.classList.remove('speaking'));
+    }
+  } catch (e) {
+    loading.remove();
+    addMsg('kodo error', 'Connection error. Check your API key and network.');
+  }
+}
+
+function speak(text, onEnd) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 1.05;
+  u.onend = onEnd;
+  speechSynthesis.speak(u);
+}
+
+function toggleSpeak() {
+  speakEnabled = !speakEnabled;
+  document.getElementById('speakToggle').textContent = speakEnabled ? '🔊' : '🔇';
+}
+
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input not supported. Use Safari or Chrome.');
+    return;
+  }
+  if (isRecording) { recognition.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.onstart = () => { isRecording = true; document.getElementById('micBtn').classList.add('recording'); };
+  recognition.onresult = (e) => { document.getElementById('textInput').value = e.results[0][0].transcript; send(); };
+  recognition.onend = () => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); };
+  recognition.onerror = () => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); };
+  recognition.start();
+}
+
+// === DIARY ===
+
+function getDiaryEntries() {
+  const raw = localStorage.getItem('kodo_diary');
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveDiaryEntries(entries) {
+  localStorage.setItem('kodo_diary', JSON.stringify(entries));
+}
+
+function renderDiary() {
+  const entries = getDiaryEntries();
+  const container = document.getElementById('diaryEntries');
+  const empty = document.getElementById('diaryEmpty');
+  const count = document.getElementById('diaryCount');
+
+  container.innerHTML = '';
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="diary-empty">Press the microphone to start your diary.<br><br>Speak freely — Kodo listens and saves.</div>';
+    count.textContent = '';
+    return;
+  }
+
+  count.textContent = entries.length + ' entries';
+
+  entries.forEach((entry, i) => {
+    const div = document.createElement('div');
+    div.className = 'diary-entry';
+    const d = new Date(entry.timestamp);
+    const dateStr = d.toLocaleDateString('fi-FI', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = d.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+    div.innerHTML = `<div class="time">${dateStr} klo ${timeStr}</div><div class="text">${escapeHtml(entry.text)}</div>`;
+    if (entry.kodoNote) {
+      div.innerHTML += `<div class="kodo-note">Kodō: ${escapeHtml(entry.kodoNote)}</div>`;
+    }
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function addDiaryEntry(text) {
+  const entry = { timestamp: new Date().toISOString(), text: text, kodoNote: null };
+  const entries = getDiaryEntries();
+  entries.push(entry);
+  saveDiaryEntries(entries);
+  renderDiary();
+
+  // Ask Kodo for a note
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 150,
+        system: DIARY_SYSTEM,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await res.json();
+    if (data.content && data.content[0]) {
+      entry.kodoNote = data.content[0].text;
+      const allEntries = getDiaryEntries();
+      allEntries[allEntries.length - 1] = entry;
+      saveDiaryEntries(allEntries);
+      renderDiary();
+    }
+  } catch (e) {
+    // Diary works even without Kodo's note
+  }
+}
+
+function diaryRecord() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input not supported. Use Safari or Chrome.');
+    return;
+  }
+  const btn = document.getElementById('diaryMic');
+  if (isDiaryRecording) { diaryRecognition.stop(); return; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  diaryRecognition = new SR();
+  diaryRecognition.lang = 'fi-FI';
+  diaryRecognition.interimResults = false;
+  diaryRecognition.continuous = true;
+
+  let fullText = '';
+
+  diaryRecognition.onstart = () => {
+    isDiaryRecording = true;
+    btn.classList.add('recording');
+    btn.innerHTML = '⏹ Stop';
+  };
+
+  diaryRecognition.onresult = (e) => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        fullText += (fullText ? ' ' : '') + e.results[i][0].transcript;
+      }
+    }
+  };
+
+  diaryRecognition.onend = () => {
+    isDiaryRecording = false;
+    btn.classList.remove('recording');
+    btn.innerHTML = '🎤 Speak';
+    if (fullText.trim()) {
+      addDiaryEntry(fullText.trim());
+    }
+  };
+
+  diaryRecognition.onerror = (e) => {
+    isDiaryRecording = false;
+    btn.classList.remove('recording');
+    btn.innerHTML = '🎤 Speak';
+    if (fullText.trim()) {
+      addDiaryEntry(fullText.trim());
+    }
+  };
+
+  diaryRecognition.start();
+}
+
+function diaryExport() {
+  const entries = getDiaryEntries();
+  if (entries.length === 0) { alert('No entries to export.'); return; }
+
+  let md = '# Kodō Diary\n\n';
+  let currentDate = '';
+
+  entries.forEach(entry => {
+    const d = new Date(entry.timestamp);
+    const dateStr = d.toLocaleDateString('fi-FI', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = d.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+
+    if (dateStr !== currentDate) {
+      md += `## ${dateStr}\n\n`;
+      currentDate = dateStr;
+    }
+
+    md += `**${timeStr}**\n${entry.text}\n`;
+    if (entry.kodoNote) {
+      md += `> _Kodō: ${entry.kodoNote}_\n`;
+    }
+    md += '\n';
+  });
+
+  md += '---\n_Exported from Kodō 鼓動_\n';
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `kodo-diary-${now}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function diaryClear() {
+  if (!confirm('Delete all diary entries? This cannot be undone.')) return;
+  localStorage.removeItem('kodo_diary');
+  renderDiary();
+}
+</script>
+</body>
+</html>

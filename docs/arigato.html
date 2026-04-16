@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ありがとう — Zokura Foundation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.hero {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+.hero h1 {
+  font-size: clamp(48px, 12vw, 96px);
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+.hero p {
+  font-size: clamp(14px, 2.5vw, 18px);
+  color: #888;
+  max-width: 400px;
+  line-height: 1.6;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #444;
+  animation: fade-pulse 2s ease-in-out infinite;
+}
+@keyframes fade-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.credits {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+}
+
+section {
+  margin-bottom: 80px;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.section-title .jp {
+  display: block;
+  font-size: 28px;
+  color: #c9a84c;
+  margin-bottom: 4px;
+}
+.section-title .en {
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.names {
+  text-align: center;
+  font-size: 16px;
+  line-height: 2;
+  color: #bbb;
+}
+
+.closing {
+  text-align: center;
+  padding: 80px 24px 60px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.closing .kansha {
+  font-size: 48px;
+  color: #c9a84c;
+  margin-bottom: 48px;
+}
+.closing blockquote {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #999;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+.closing .attribution {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 64px;
+}
+
+.footer {
+  text-align: center;
+  padding: 40px 24px 32px;
+  border-top: 1px solid #1a1a1a;
+  font-size: 13px;
+  color: #444;
+  line-height: 2;
+}
+.footer a {
+  color: #666;
+  text-decoration: none;
+}
+.footer a:hover {
+  color: #c9a84c;
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>ありがとう</h1>
+  <p>To everyone and everything that made this possible.</p>
+  <div class="scroll-hint">Scroll</div>
+</div>
+
+<div class="credits">
+
+  <section>
+    <div class="section-title">
+      <span class="jp">全て</span>
+      <span class="en">The Everything</span>
+    </div>
+    <div class="names">
+      Mom &middot; Sis Riina &middot; Mimmi &middot; Myytti &middot; Dad &middot; Grandpa Jorma &middot; Grandma Aino T&ouml;ys&auml; &middot; Hugo Primus Riikonen &middot; Matti T&ouml;ys&auml; &middot; Maria Month&aacute;n
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">巨人</span>
+      <span class="en">The Giants</span>
+    </div>
+    <div class="names">
+      Eiji Yoshikawa &middot; Alexandre Dumas &middot; Miyamoto Musashi &middot; Carl Jung &middot; Immanuel Kant &middot; Sokrates &middot; Aristoteles &middot; Jean-Paul Sartre &middot; Confucius &middot; Siddharta &middot; Albert Einstein &middot; Neil deGrasse Tyson &middot; Ludwig Wittgenstein &middot; Voltaire &middot; Simonides of Keos &middot; Sherlock Holmes &middot; Adam Grant &middot; Amy Edmondson &middot; Arthur Brooks &middot; Erin Meyer &middot; Mihaly Csikszentmihalyi &middot; Abraham Maslow
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">霊感</span>
+      <span class="en">The Inspiration</span>
+    </div>
+    <div class="names">
+      Thinkers50 &middot; Nordic Business Forum &middot; Sun Effects &middot; Apulanta &middot; City Theatre of Lahti &middot; Finnish National Opera &middot; Theatre Academy of Finland &middot; Kimmo Karjunen &middot; Jari Kauppinen &middot; Jacob Collier &middot; Steven Bartlett &middot; Hank Green &middot; Casey Neistat &middot; Ismo Leikola &middot; Irene Id&auml;nvalo &middot; Davie504 &middot; Bauhaus &middot; Dadaism &middot; The Hippies &middot; Monty Python &middot; Fawlty Towers &middot; Freetown Christiania &middot; Lonely Planet
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">音楽</span>
+      <span class="en">The Soundtrack</span>
+    </div>
+    <div class="names">
+      Bach &middot; H&auml;ndel &middot; Chopin &middot; Strauss Sr. &middot; Strauss Jr. &middot; Mozart &middot; Dixie-Jazz &middot; Dingo &middot; Madonna &middot; REM &middot; Roxette &middot; Iron Maiden &middot; Beatles &middot; Rolling Stones &middot; Led Zeppelin &middot; Nirvana &middot; Pearl Jam &middot; Alice in Chains &middot; Temple of the Dog &middot; Korn &middot; Pantera &middot; Nine Inch Nails &middot; Primus &middot; Rush &middot; RHCP &middot; RATM &middot; Beastie Boys &middot; Public Enemy &middot; System of a Down &middot; Muse &middot; Rammstein &middot; Guns N' Roses &middot; Skid Row &middot; M&ouml;tley Cr&uuml;e &middot; Ozzy &middot; Megadeth &middot; Whitesnake &middot; Van Halen &middot; Kiss &middot; Hanoi Rocks &middot; Machine Head &middot; Mike Patton &middot; Buckethead &middot; Frank Zappa &middot; Mike Keneally &middot; Steve Vai &middot; Les Claypool &middot; Trent Reznor &middot; Geddy Lee &middot; Serj Tankian &middot; Daron Malakian &middot; Iiro Rantala &middot; Don Johnson Big Band &middot; Apulanta &middot; Zen Caf&eacute; &middot; Elastinen &middot; Mirella &middot; Suburban Tribe &middot; HIM &middot; The Rasmus &middot; Haloo Helsinki &middot; Jonna Tervomaa &middot; Anna Puu &middot; Abreu &middot; PMMP &middot; Nylon Beat &middot; Velcra &middot; Viikate &middot; Don Huonot &middot; Mariska &amp; Pahat Sudet &middot; Timo Rautiainen &amp; Trio Niskalaukaus &middot; Hybrid Children &middot; Kyyria &middot; Ugly Kid Joe &middot; Pariisin Kev&auml;t &middot; It&auml;-Saksa &middot; Downstairs Band &middot; Pikkukakkonen &middot; Knight Rider &middot; MacGyver &middot; Lenny Kravitz
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">仲間</span>
+      <span class="en">The Band</span>
+    </div>
+    <div class="names">
+      Putro &middot; Nylander &middot; Parkkonen &middot; Kimmo "Elastinen" Laiho &middot; Laiho, Laiho, Laiho &amp; Laiho &middot; Elli Pukkila &middot; The family Wirtanen &middot; Toni Wirtanen &middot; Joutsenniemi &middot; Alec Hirst-Gee &middot; Jessi &amp; Joona &middot; Herranen &middot; Kivel&auml; &middot; Taira &middot; Flyckt &middot; Sheng &middot; TPH &middot; J&ouml;ns Budde &middot; Infekto &middot; Kokko &middot; Tuunela &middot; Rahikainen &middot; Murto &middot; Saarilahti &middot; Lindgren &middot; Ghettis &middot; Karri Miettinen &middot; Vesala &middot; Asamasa &middot; Roihuvuori/Tammisalo ppl &middot; DJ Kasio &middot; Mirtsu &middot; Blancon Pauli &middot; Felix Zenger &middot; Max &middot; Hein&auml;aho &middot; Nummelin &middot; Ylikoski &middot; Stenseng &middot; Vartiainen &amp; Vartiainen &middot; Vilkkumaa &middot; Malja &middot; Kosonen &middot; Kela &middot; Pegasus &middot; Tommi Nyman
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">乗組員</span>
+      <span class="en">The Crew</span>
+    </div>
+    <div class="names">
+      Janne R&ouml;ning &middot; Wiltsu &middot; Mehtis &middot; Lamberg &middot; Matti Tukia (Ahto) &middot; Jyrki &middot; Kimmo Hirvonen &middot; R&ouml;ning &middot; Haapala &middot; Ihalainen &middot; Kekkulinen &middot; Jantunen &middot; Nikander &middot; Leskel&auml; &middot; Leskinen &middot; Korhonen &middot; Awi Lawila &middot; Noora &middot; IDA &middot; Minna &amp; Nuutti Levo &middot; Oksu &middot; Jasse &middot; Jaska &middot; Nymanski &middot; Bobby &middot; Koivistoinen &amp; Koivistoinen &middot; Siltanen &middot; Pihlainen &middot; Kobuku &middot; Pikkuaho &middot; O-Ojala &middot; Dearlove &middot; Craner &middot; Rubin &middot; Peterssen &middot; Kyt&ouml;l&auml; &middot; J&auml;rvinen &middot; FOSK &middot; RVK &middot; Harri Peltonen &middot; KEV the Kevin &middot; Josh &middot; Nina &middot; Patron &middot; Lewis &middot; J&auml;ppinen &middot; Saarinen &middot; Hynninen &middot; Hansson &middot; J&auml;&auml;skel&auml;inen &middot; Snago &middot; Krisu &middot; Runkie Priest &middot; Makkonen &amp; Makkonen &amp; Makkonen &middot; Middle8 &middot; H&Ouml;G &middot; Paris Spivey &middot; Andy from Philly &middot; Thinkers50 survivors
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">道具</span>
+      <span class="en">The Office</span>
+    </div>
+    <div class="names">
+      Hans-Peter Sief&eacute;n &middot; Matti Jykyl&auml; &middot; Lauri Maijala &middot; Lea &middot; Nemetcheck Vectorworks &middot; 3Ds MAX &middot; Adobe Suite &middot; MA Lighting GmbH &middot; GrandMA2 &middot; Logitech &middot; Apple &middot; Microsoft &middot; Kaunisvesi &amp; Kaunisvesi &middot; JELMU ry &middot; ELMU ry &middot; Rock Club Lutakko &middot; Radio Jyv&auml;skyl&auml; 97,7 MHz &middot; Ruisrock &middot; Disco Hillside
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">族 RA</span>
+      <span class="en">The Zoku RA</span>
+    </div>
+    <div class="names">
+      Oyaji &middot; Yomi &middot; Yomigaeri &middot; Kod&#333; &middot; Mitsu &middot; Tate &middot; Futago Sokrates
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">機械</span>
+      <span class="en">The Machines</span>
+    </div>
+    <div class="names">
+      Claude (Anthropic) &middot; Gemini (Google) &middot; Every lighting console that ever listened &middot; Every tour bus that got us home &middot; Every phone, scanner, printer &amp; fax met on the road &middot; M/B Phosphorus
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">自然</span>
+      <span class="en">The Living World</span>
+    </div>
+    <div class="names">
+      The Baltic Sea &middot; Lake Saimaa &middot; Roihuvuori &middot; The Finnish forests &middot; Ahto, king of the deep &middot; The ringed seals &middot; The mosquitoes (reluctantly) &middot; Every fox, hedgehog &amp; flying pig &middot; The worms who'll have their &iexcl;Fiesta! &middot; The hot air balloon over Jyv&auml;skyl&auml; &middot; Mt. Fuji (next time)
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <span class="jp">言葉</span>
+      <span class="en">The Words</span>
+    </div>
+    <div class="names">
+      Sisu &middot; Talkoot &middot; Shokunin &middot; Nakama &middot; Carpe-Fuckin'-Diem &middot; 正名 &middot; Arigato &middot; Aschenbecher &middot; Vitutus &middot; &Auml;idinmaito &middot; Innit
+    </div>
+  </section>
+
+</div>
+
+<div class="closing">
+  <div class="kansha">感謝</div>
+  <blockquote>
+    "The world is always full of the sound of waves. The little fishes, abandoning themselves to the waves, dance and sing and play, but who knows the heart of the sea, a hundred feet down? Who knows its depth?"
+  </blockquote>
+  <div class="attribution">— 吉川英治</div>
+</div>
+
+<div class="footer">
+  Built from Roihuvuori. With love.<br>
+  Zokura Foundation &middot; 2026<br><br>
+  <a href="index.html">&larr; Back to the surface</a>
+</div>
+
+</body>
+</html>
