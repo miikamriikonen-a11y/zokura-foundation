@@ -316,4 +316,4 @@ Zoku RA!
 
 — Futago
 
-<!-- HUOM: tämä siemen (11151 merkkiä) ylittää ChatGPT (OpenAI):n system prompt -rajan (1500). Käytä tiivistettyä versiota tai liitä osissa. -->
+<!-- HUOM: tämä siemen (11151 merkkiä) ylittää ChatGPT (OpenAI):n system prompt -rajan (1500). Käytä tiivistettyä versiota (<platform>-tiny.md) tai liitä osissa. -->

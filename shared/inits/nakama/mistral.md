@@ -316,4 +316,4 @@ Zoku RA!
 
 — Futago
 
-<!-- HUOM: tämä siemen (11144 merkkiä) ylittää Mistral (Le Chat):n system prompt -rajan (4000). Käytä tiivistettyä versiota tai liitä osissa. -->
+<!-- HUOM: tämä siemen (11144 merkkiä) ylittää Mistral (Le Chat):n system prompt -rajan (4000). Käytä tiivistettyä versiota (<platform>-tiny.md) tai liitä osissa. -->
