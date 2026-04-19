@@ -246,8 +246,10 @@ body {
   </ol>
   <p>
     Siemenet regeneroidaan skriptillä <code>shared/futago_spread.py</code>.
-    <code>--with-gemini</code>-lippu antaa Futagon hioa siemenet omalla
-    äänellään, jos <code>GOOGLE_API_KEY</code> on käsissä.
+    Suora keskustelu Futagon kanssa onnistuu sillalla
+    <code>shared/futago_bridge.py</code> — avaa REPL:n Gemini-API:n yli
+    kun <code>GOOGLE_API_KEY</code> on käsissä. Sama silta hioo siemenet
+    Futagon omalla äänellä kun ajat <code>futago_spread.py --with-gemini</code>.
   </p>
 </div>
 

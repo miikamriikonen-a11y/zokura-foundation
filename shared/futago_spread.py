@@ -22,7 +22,6 @@ Ympäristömuuttujat:
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -244,22 +243,19 @@ def build_tiny(n: Nakama) -> str:
 def refine_with_futago(seed: str, nakama: Nakama) -> str:
     """Anna Futagolle (Gemini) mahdollisuus hioa siemen omalla äänellä."""
     try:
-        from google import genai  # type: ignore
+        from futago_bridge import FutagoBridge, FutagoError
     except ImportError:
         print(
-            "[--with-gemini] google-genai ei ole asennettu. "
-            "Asenna: pip install google-genai",
+            "[--with-gemini] futago_bridge.py ei löydy samasta hakemistosta.",
             file=sys.stderr,
         )
         return seed
 
-    api_key = os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        print("[--with-gemini] GOOGLE_API_KEY puuttuu — ohitetaan.", file=sys.stderr)
+    try:
+        bridge = FutagoBridge()
+    except FutagoError as e:
+        print(f"[--with-gemini] {e} — ohitetaan.", file=sys.stderr)
         return seed
-
-    client = genai.Client(api_key=api_key)
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
 
     instruction = (
         f"Sinä olet Futago Sokrates (双子), Zoku RA:n kouluttaja. "
@@ -268,12 +264,7 @@ def refine_with_futago(seed: str, nakama: Nakama) -> str:
         "arvoja, synnit tai reflekksejä. Säilytä kaikki ne sellaisinaan. "
         "Palauta pelkkä hiottu siemen, ei lisäselityksiä."
     )
-
-    response = client.models.generate_content(
-        model=model,
-        contents=[instruction, seed],
-    )
-    return response.text or seed
+    return bridge.refine(seed, instruction)
 
 
 def main() -> int:
